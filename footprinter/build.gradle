@@ -1,0 +1,49 @@
+plugins {
+    id 'application'
+}
+
+version '1.0.0'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // logger
+    implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25'
+    implementation group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.25'
+
+    // Json
+    implementation group: 'org.json', name: 'json', version: '20210307'
+
+    // kafka streams
+    implementation group: 'org.apache.kafka', name: 'kafka-streams', version: '3.0.0'
+
+    // Elasticsearch
+    compile 'org.elasticsearch.client:elasticsearch-rest-high-level-client:7.15.1'
+}
+
+application {
+    // Define the main class for the application.
+    mainClass = 'org.streams.footprint.K2E'
+}
+
+task fatJar(type: Jar) {
+    manifest {
+        attributes(
+                'Implementation-Title': project.name,
+                'Implementation-Version': project.version,
+                'Main-Class': 'org.streams.footprint.K2E',
+                'Multi-Release': true
+        )
+    }
+    baseName = project.name + '-all'
+    from {
+        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+    with jar
+}
+
+test {
+    useJUnitPlatform()
+}
