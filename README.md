@@ -1,5 +1,6 @@
 # Footprint Registration During Massive Data Processing
-Este repositorio contiene los recursos de la charla "Registro de Huella Durante el Procesamiento Masivo de Datos"
+
+This repository contains the prototype of a mechanism built in Java to find the route that follows an specific message within an event processing pipeline. The documentation about and details about this implementation can be found in this [link](doc/Footprint_Registration_During_Massive_Data_Processing.pdf).
 
 ## Build Prerequisites
 
@@ -23,6 +24,11 @@ docker-compose exec kafka sh -c "kafka-topics --create --topic ___topic___2 --zo
 ```
 ```
 docker-compose exec kafka sh -c "kafka-topics --create --topic ___topic___3 --zookeeper zookeeper:2181 --partitions 1 --replication-factor 1"
+```
+
+- List topics
+```
+docker-compose exec kafka sh -c "kafka-topics --list --zookeeper zookeeper:2181"
 ```
 
 - Build Apps
@@ -49,6 +55,8 @@ docker-compose exec kafka sh -c "kafka-topics --create --topic ___topic___3 --zo
 ```
 
 ## Test
+
+- Temperature sensor message example
 ```
 {
   "code":"678923AB",
@@ -65,6 +73,7 @@ docker-compose exec kafka sh -c "kafka-console-producer --topic ___topic___1 --b
 - Publish a raw message <key,value>
 ```
 sensor_read_001,{"code":"678923AB","time":1600291504,"temperature":10.5,"humidity":20}
+sensor_read_002,{"code":"678923AC","time":1636461192,"temperature":5.5,"humidity":20}
 ``` 
 
 ## How to get data from Elasticsearch
@@ -75,18 +84,32 @@ curl --location --request GET 'http://localhost:9200/_cat/indices?v'
 ```
 - Get Documents
 ```
-curl --request GET --url 'http://localhost:9200/jmicros-streams/_search?scroll=10m&size=50' --header 'cache-control: no-cache' --header 'postman-token: d7dbffe1-f9b8-13a8-2116-02e3b9ca2228'
+curl --location --request GET 'http://localhost:9200/footprint/_search' \
+--header 'cache-control: no-cache' \
+--header 'content-type: application/json' \
+--header 'postman-token: b5e624f4-754a-5a89-dba7-6189c9bc5f81' \
+--data-raw ''
 ```
 - Get Route
 ```
-curl --request POST \
-  --url http://localhost:9200/jmicros-streams/_search \
-  --header 'cache-control: no-cache' \
-  --header 'content-type: application/json' \
-  --header 'postman-token: b5e624f4-754a-5a89-dba7-6189c9bc5f81' \
-  --data '{"query":{"match":{"message.code":"678923AB"}},"_source":["topic"]}'
+curl --location --request POST 'http://localhost:9200/footprint/_search' \
+--header 'cache-control: no-cache' \
+--header 'content-type: application/json' \
+--header 'postman-token: b5e624f4-754a-5a89-dba7-6189c9bc5f81' \
+--data-raw '{
+    "query": {
+        "match": {
+            "message.code": "678923AB"
+        }
+    },
+    "_source": [
+        "topic"
+    ]
+}'
 ```
 - Delete Index
 ```
-curl --request DELETE --url http://localhost:9200/jmicros-streams --header 'cache-control: no-cache' --header 'postman-token: 4a6c0821-802b-547b-26f3-d15187e15413'
+curl --location --request DELETE 'http://localhost:9200/footprint' \
+--header 'cache-control: no-cache' \
+--header 'postman-token: 4a6c0821-802b-547b-26f3-d15187e15413'
 ```
